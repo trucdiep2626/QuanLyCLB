@@ -93,18 +93,22 @@ namespace QuanLyCLB
                     { query += "and"; }
                     query += " ChucVu like N'" + cbChucVu.SelectedItem.ToString() + "'";
                 }
-                adapter = new SqlDataAdapter(query, connection);
-                adapter.Fill(data, "TimKiem");
-                connection.Close();
-                dGVDSChung.DataSource = data.Tables["TimKiem"];
+                if (flag == 1)
+                {
+                    adapter = new SqlDataAdapter(query, connection);
+                    adapter.Fill(data, "TimKiem");
+                    connection.Close();
+                    dGVDSChung.DataSource = data.Tables["TimKiem"];
+                }
+                else
+                    dGVDSChung.DataSource = GetDSChung().Tables[0];
             }
         }
         DataSet GetDSChung()
         {
             data = new DataSet();
 
-            string query = "select * from dsThanhVien" +
-                "";
+            string query = "select MaSV as N'Mã SV', HoTen as N'Họ tên', Lop as N'Lớp',Sdt as N'SĐT',Email,ChucVu as N'Chức vụ' from dsThanhVien";
             using (connection = new SqlConnection(ConnectionString))
             {
                 connection.Open();
@@ -175,6 +179,23 @@ namespace QuanLyCLB
                 connection.Close();
                 dGVDSChung.DataSource = GetDSChung().Tables[0];
             }
+        }
+
+        private void dGVDSChung_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            int i = dGVDSChung.CurrentRow.Index;
+            txtMaSV.Text = dGVDSChung.Rows[i].Cells[0].Value.ToString();
+            txtHoTen.Text = dGVDSChung.Rows[i].Cells[1].Value.ToString();
+            txtLop.Text = dGVDSChung.Rows[i].Cells[2].Value.ToString();
+            txtSdt.Text = dGVDSChung.Rows[i].Cells[3].Value.ToString();
+            txtEmail.Text = dGVDSChung.Rows[i].Cells[4].Value.ToString();
+            cbChucVu.Text=dGVDSChung.Rows[i].Cells[5].Value.ToString();
+
+        }
+
+        private void cbChucVu_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

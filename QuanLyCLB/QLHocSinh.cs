@@ -10,12 +10,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Collections;
+using System.Configuration;
 
 namespace QuanLyCLB
 {
     public partial class QLHocSinh : Form
     {
-        String ConnectionString = @"Data Source=DESKTOP-C3URM5B;Initial Catalog=DSTV;Integrated Security=True";
+        String Con = @"Data Source=DESKTOP-C3URM5B;Initial Catalog=DSTV;Integrated Security=True";
         SqlConnection connection;
         string query = "";
         SqlCommand cmd;
@@ -30,8 +31,54 @@ namespace QuanLyCLB
 
         private void btHienThi_Click(object sender, EventArgs e)
         {
+            data = new DataSet();
+            connection = new SqlConnection(Con);
+            if (connection.State != ConnectionState.Open)
+            {
+
+                connection.Open();
+            }
+
+            {
+                query = "select * from dsThanhVienLop where";
+                int flag = 0;
+                if (cbML.SelectedItem != null)
+                {
+
+                    query += " MaLop like '" + cbML.SelectedItem.ToString() + "'";
+                    flag = 1;
+                }
+                if (txtMaSV.Text.CompareTo("") != 0)
+                {
+                    if (flag == 1)
+                    { query += "and"; }
+                    string masv = " MaSV like '" + txtMaSV.Text + "'";
+                    query = String.Concat(query, masv);
+
+                    flag = 1;
+                }
+
+
+                if (txtChucVu.Text.CompareTo("") != 0)
+
+                {
+                    if (flag == 1)
+                    { query += "and"; }
+                    query += " ChucVu like N'" + txtChucVu.Text + "'";
+                }
+                if (flag == 1)
+                {
+                    adapter = new SqlDataAdapter(query, connection);
+                    adapter.Fill(data, "TimKiem");
+                    connection.Close();
+                    dGVDSHocSinh.DataSource = data.Tables["TimKiem"];
+                }
+                else
+                    dGVDSHocSinh.DataSource = GetDSHS().Tables[0];
+            }
 
         }
+
 
         private void QLHocSinh_Load(object sender, EventArgs e)
         {
@@ -48,7 +95,8 @@ namespace QuanLyCLB
         {
             data = new DataSet();
 
-            string query = "select MaLop,dsThanhVienLop.MaSV,HoTen,Sdt,Email from dsThanhVienLop join dsThanhVien on dsThanhVien.MaSV=dsThanhVienLop.MaSV";         using (connection = new SqlConnection(ConnectionString))
+            query = "select dsLop.MaLop as N'Mã Lớp',dsLop.TenLop as N'Tên lớp',dsThanhVienLop.MaSV as N'Mã SV',HoTen as N'Họ tên',dsThanhVienLop.ChucVu as N'Chức vụ' from dsThanhVien join dsThanhVienLop on dsThanhVien.MaSV = dsThanhVienLop.MaSV join dsLop on dsLop.MaLop = dsThanhVienLop.MaLop";         
+            using (connection = new SqlConnection(Con))
             {
                 connection.Open();
                 adapter = new SqlDataAdapter(query, connection);
@@ -62,7 +110,7 @@ namespace QuanLyCLB
             data = new DataSet();
 
             string query = "select MaSV from dsThanhVien"; 
-            using (connection = new SqlConnection(ConnectionString))
+            using (connection = new SqlConnection(Con))
             {
                 connection.Open();
                 adapter = new SqlDataAdapter(query, connection);
@@ -75,7 +123,7 @@ namespace QuanLyCLB
         {
             
             data = new DataSet();
-            connection = new SqlConnection(ConnectionString);
+            connection = new SqlConnection(Con);
             if (connection.State != ConnectionState.Open)
             {
 
@@ -92,12 +140,15 @@ namespace QuanLyCLB
           
         private void btThem_Click(object sender, EventArgs e)
         {
-            data = new DataSet();
-            connection = new SqlConnection(ConnectionString);
+            //String Con = @"Data Source=DESKTOP-C3URM5B;Initial Catalog=DSTV;Integrated Security=True";
+            /*data = new DataSet();
+            connection = new SqlConnection();
+            connection.ConnectionString=Con;
+            MessageBox.Show(connection.ConnectionString);
             if (connection.State != ConnectionState.Open)
             {
-
                 connection.Open();
+                
             }
             if (txtMaSV.Text.CompareTo("") == 0 || txtChucVu.Text.CompareTo("") == 0 || cbML.SelectedItem == null)
             {
@@ -105,10 +156,12 @@ namespace QuanLyCLB
             }
             else {
                 int f = 0;
+                
                 foreach (DataRow row in GetDSMaSV().Tables[0].Rows)
                 {
+                    
                     //foreach (DataColumn col in GetDSMaSV().Tables[0].Columns)
-                        if(txtMaSV.Text.CompareTo(row[0].ToString())==0)
+                    if (txtMaSV.Text.CompareTo(row[0].ToString())==0)
                         {
                             f = 1;
                             query = "insert into dsThanhVienLop values ('" + cbML.SelectedItem.ToString() + "','" + txtMaSV.Text + "',N'" + txtChucVu.Text + "')";
@@ -118,24 +171,60 @@ namespace QuanLyCLB
                             dGVDSHocSinh.DataSource = GetDSHS().Tables[0];
                         }
                 }
-                if(f==0)
+                i`f(f==0)
                 {
                     MessageBox.Show("Sinh viên không tồn tại");
                 }
 
             }
-            
-           
+            */
+            string constring =Con;
+            using (SqlConnection con = new SqlConnection(constring))
+            {
+                if (txtMaSV.Text.CompareTo("") == 0 || txtChucVu.Text.CompareTo("") == 0 || cbML.SelectedItem == null)
+                {
+                    MessageBox.Show("Thông tin chưa đầy đủ");
+                }
+                else
+                {
+                    int f = 0;
+                    foreach (DataRow row in GetDSMaSV().Tables[0].Rows)
+                    {
+                        if (txtMaSV.Text.CompareTo(row[0].ToString()) == 0)
+                        {
+                            f = 1;
+                            query = "insert into dsThanhVienLop values ('" + cbML.SelectedItem.ToString() + "','" + txtMaSV.Text + "',N'" + txtChucVu.Text + "')";
+
+                            using (SqlCommand cmd = new SqlCommand(query, con))
+                            {
+                                cmd.CommandType = CommandType.Text;
+                                using (SqlDataAdapter sda = new SqlDataAdapter(cmd))
+                                {
+                                    DataSet ds = new DataSet();
+                                    sda.Fill(ds);
+                                    connection.Close();
+                                    dGVDSHocSinh.DataSource = GetDSHS().Tables[0];
+                                }
+                            }
+                        }
+                    }
+                    if (f == 0)
+                    {
+                        MessageBox.Show("Sinh viên không tồn tại");
+                    }
+                }
+            }
         }
 
         private void btSua_Click(object sender, EventArgs e)
         {
-            data = new DataSet();
-            connection = new SqlConnection(ConnectionString);
+            /*data = new DataSet();
+            connection = new SqlConnection(Con);
             if (connection.State != ConnectionState.Open)
             {
 
                 connection.Open();
+                MessageBox.Show("aaa");
             }
             if (txtMaSV.Text.CompareTo("") == 0 || txtChucVu.Text.CompareTo("") == 0 || cbML.SelectedItem == null)
             {
@@ -143,10 +232,10 @@ namespace QuanLyCLB
             }
             else
             {
+                MessageBox.Show("aaa");
                 int f = 0;
                 foreach (DataRow row in GetDSMaSV().Tables[0].Rows)
                 {
-                    //foreach (DataColumn col in GetDSMaSV().Tables[0].Columns)
                     if (txtMaSV.Text.CompareTo(row[0].ToString()) == 0)
                     {
                         f = 1;
@@ -161,13 +250,49 @@ namespace QuanLyCLB
                 {
                     MessageBox.Show("Sinh viên không tồn tại");
                 }
+            }*/
+            string constring = Con;
+            using (SqlConnection con = new SqlConnection(constring))
+            {
+                if (txtMaSV.Text.CompareTo("") == 0 || txtChucVu.Text.CompareTo("") == 0 || cbML.SelectedItem == null)
+                {
+                    MessageBox.Show("Thông tin chưa đầy đủ");
+                }
+                else
+                {
+                    int f = 0;
+                    foreach (DataRow row in GetDSMaSV().Tables[0].Rows)
+                    {
+                        if (txtMaSV.Text.CompareTo(row[0].ToString()) == 0)
+                        {
+                            f = 1;
+                            query = "update dsThanhVienLop set MaLop='" + cbML.SelectedItem.ToString() + "',MaSV='" + txtMaSV.Text + "',ChucVu=N'" + txtChucVu.Text + "' where MaSV like '" + txtMaSV.Text + "'";
+                            using (SqlCommand cmd = new SqlCommand(query, con))
+                            {
+                                cmd.CommandType = CommandType.Text;
+                                using (SqlDataAdapter sda = new SqlDataAdapter(cmd))
+                                {
+                                    DataSet ds = new DataSet();
+                                    sda.Fill(ds);
+                                    connection.Close();
+                                    dGVDSHocSinh.DataSource = GetDSHS().Tables[0];
+                                }
+                            }
+                        }
+                    }
+                    if (f == 0)
+                    {
+                        MessageBox.Show("Sinh viên không tồn tại");
+                    }
+
+                }
             }
         }
 
         private void btXoa_Click(object sender, EventArgs e)
         {
             data = new DataSet();
-            connection = new SqlConnection(ConnectionString);
+            connection = new SqlConnection(Con);
             if (connection.State != ConnectionState.Open)
             {
 
@@ -185,7 +310,7 @@ namespace QuanLyCLB
             if (cbML.SelectedItem != null)
             {
                 data = new DataSet();
-                connection = new SqlConnection(ConnectionString);
+                connection = new SqlConnection(Con);
                 if (connection.State != ConnectionState.Open)
                 {
 
@@ -204,6 +329,15 @@ namespace QuanLyCLB
                         txtTenL.Text=row[col].ToString();
                 }
             }
+        }
+
+        private void dGVDSHocSinh_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            
+                int i = dGVDSHocSinh.CurrentRow.Index;
+           cbML.Text = dGVDSHocSinh.Rows[i].Cells[0].Value.ToString();
+            txtMaSV.Text = dGVDSHocSinh.Rows[i].Cells[2].Value.ToString();
+            txtChucVu.Text = dGVDSHocSinh.Rows[i].Cells[4].Value.ToString();
         }
     }
 }
